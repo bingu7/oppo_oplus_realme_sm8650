@@ -11,17 +11,15 @@
 - 官方使用的 Bazel 编译器过于不稳定且低效，容易出现各种各样莫名其妙的错误，且全网几乎找不到任何有效解决方法，对于新手极不友好；
 - 由于绿厂魔改内核f2fs代码，导致欧加真机型刷入GKI内核后不清空data分区就无法正常开机。
 ## 本项目的主要内容
-- 提供 OKI（官方源码）/ GKI（谷歌通用内核源码）双编译模式，OKI更稳定（保留官方驱动/调度），GKI可玩性更强（修改配置项更方便）；
-- 为 GKI 移植了官方内核的f2fs源码，使 GKI 内核可以和官方 OKI 内核一样，刷入后可保留数据正常开机，不需要清空data ~~（新建文件夹）~~；
-- 改用 LLVM/Clang 20 进行编译，并排除了官方源码中不必要的 vendor 源码参与，对比原 bazel 编译器缩短了近一半的编译时间（原版官方编译器每次约需要超过1h才能完成编译），提高了编译过程的稳定性，输出日志更便于维护调试；
-- 修复官方代码部分bug/未及时更新的补丁，并引入风驰内核驱动支持 ~~（待测试，尚不确定可以正常起效）~~；
+- 提供 OKI（官方源码）/ GKI（谷歌通用内核源码）双编译模式，OKI保留官方驱动/调度，GKI兼容性更强（无需相同内核小版本即可刷入）；
+- 为 GKI 移植官方内核的f2fs源码，使 GKI 内核可以和官方 OKI 内核一样，刷入后可保留数据正常开机，不需要清空data ~~（新建文件夹）~~；
+- 改用 LLVM/Clang 20 进行编译，并排除了官方源码中不必要的 vendor 源码参与，对比原 bazel 编译器缩短了近2/3的编译时间（原版官方编译器每次约需要超过1h才能完成编译），提高了编译过程的稳定性，输出日志更便于维护调试；
+- 修复官方代码部分bug/未及时更新的补丁，并引入风驰内核驱动支持 ~~（尚无法正常起效，代码正在补全中）~~；
 - 提供 Github Action 在线编译/shell本地编译双版本脚本。
-##### 
-由于个人精力有限，本项目暂时仅提供 SukiSU Ultra 版 KernelSU 补丁，其余版本 KernelSU 支持将在后续更新 ~~（在咕了在咕了）~~。
 ## 已实现：
-- [x] 欧加真 SM8650 通用A14 OKI内核（基于一加12 6.1.57 A14官方内核源码，适用于ColorOS 14/RealmeUI 5.0）
+- [x] 欧加真 SM8650 通用OKI内核（基于一加12 6.1.57/6.1.75/6.1.118 A15官方内核源码，其他同内核版本非SM8650机型可自行测试，部分机型可完全兼容）
 ##### 
-- [x] 欧加真 SM8650 通用A15 OKI内核（基于一加12 6.1.75/6.1.118 A15官方内核源码，适用于ColorOS 15/RealmeUI 6.0）
+- [x] SukiSU Ultra/KernelSU Next双版本KSU可选
 ##### 
 - [x] 引入ccache缓存，优化工具链及编译流程，二次编译时间可缩短至约6min (注：首次使用ccache由于需要创建缓存速度会比较慢(约20min)，从第二次开始ccache才会生效加速编译，加速后单次编译时间约6~11min，具体时间随服务器负载情况而浮动)
 ##### 
@@ -33,17 +31,19 @@
 ##### 
 - [x] 可选加入 BBR/Brutal 及一系列 tcp 拥塞控制算法
 ##### 
-- [x] 三星SSG IO调度器移植
+- [x] 三星SSG IO调度器移植（目前已知仅在一加12上会导致无法正常启动，原因尚不明确，待进一步研究修复）
 ##### 
 - [x] 加入一些网络连接性能优化配置选项
+##### 
+- [x] 加入Re:Kernel支持，与Freezer，NoActive等软件配合降低功耗
 ## 待实现：
 - [ ] 为非官方支持机型移植完整风驰内核支持（正在补全中）
 - [ ] zram内置化，无需外置zram.ko挂载 ~~（有了新版 lz4&zstd 补丁真的还有必要吗）~~
 - [ ] LXC/Docker 功能支持
+- [ ] Nethunter 驱动移植
 - [ ] 一加系列新版调度器移植（schedhorizon等）
 - [ ] 欧加真 SM8650 通用A14/15 GKI内核（移植一加f2fs源码，实现免清data刷入）
-- [ ] 原版KernelSU/KernelSU Next支持
-- [ ] 将多版本内核编译脚本整合为一个脚本
+- ~~整合多版本内核编译脚本（出于操作便捷性及GitHub Action的选项数量限制，暂不进行多脚本整合）~~
 - 更多优化与特性移植……
 ##### 
 ##### 
@@ -52,6 +52,8 @@
 - Sukisu Ultra：[SukiSU-Ultra/SukiSU-Ultra](https://github.com/SukiSU-Ultra/SukiSU-Ultra)
 - susfs4ksu：[ShirkNeko/susfs4ksu](https://github.com/ShirkNeko/susfs4ksu)
 - SukiSU内核补丁：[SukiSU-Ultra/SukiSU_patch](https://github.com/SukiSU-Ultra/SukiSU_patch)
-- GKI 内核构建脚本：[WildKernels/GKI_KernelSU_SUSFS](https://github.com/WildKernels/GKI_KernelSU_SUSFS)
+- pershoot维护的KernelSU Next分支：[pershoot/KernelSU-Next](https://github.com/pershoot/KernelSU-Next)
+- KernelSU Next内核补丁：[WildKernels/kernel_patches](https://github.com/WildKernels/kernel_patches)
+- GKI 内核构建脚本：(待定)
 - ~~本地化内核构建脚本（已失效）：[Suxiaoqinx/kernel_manifest_OnePlus_Sukisu_Ultra](https://github.com/Suxiaoqinx/kernel_manifest_OnePlus_Sukisu_Ultra)~~
 - ~~风驰内核源码（不完整，修改中）：[HanKuCha/sched_ext](https://github.com/HanKuCha/sched_ext)~~
