@@ -1,8 +1,8 @@
-name: 加速版构建 6.1.57 欧加真OKI内核
+name: 加速版构建 6.1.115 (天玑特供)欧加真OKI内核
 
 env:
   TZ: Asia/Shanghai
-  CPU: 'sm8650'
+  CPU: 'mt6989'
   FEIL: 'oppo+oplus+realme'
   ANDROID_VERSION: 'android14'
   KERNEL_VERSION: '6.1'
@@ -60,10 +60,10 @@ on:
           - 'true'
           - 'default'
       better_net:
-        description: '是否开启网络功能增强优化配置(优化代理连接,IPV6等功能)'
+        description: '是否开启网络功能增强优化配置(优化代理连接,IPV6等功能;在ace5竞速版上可能导致bug,建议关闭)'
         required: true
         type: choice
-        default: 'true'
+        default: 'false'
         options:
           - 'true'
           - 'false'
@@ -103,11 +103,11 @@ jobs:
 
       - name: 配置ccache目录
         run: |
-          echo "CCACHE_DIR=$HOME/.ccache_6.1.57" >> $GITHUB_ENV
+          echo "CCACHE_DIR=$HOME/.ccache_6.1.115" >> $GITHUB_ENV
           echo "CCACHE_MAXSIZE=3G" >> $GITHUB_ENV
           echo "当前磁盘空间："
           df -h
-          echo "当前构建内核版本：6.1.57"
+          echo "当前构建内核版本：6.1.115"
           rm -rf kernel_platform
 
       - name: 载入当前版本内核的 ccache缓存
@@ -115,10 +115,10 @@ jobs:
         id: ccache-restore
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ccache-new-6.1.57-${{ runner.os }}-main
+          key: ccache-new-6.1.115-${{ runner.os }}-main
           restore-keys: |
-            ccache-new-6.1.57-${{ runner.os }}-
-            ccache-new-6.1.57-
+            ccache-new-6.1.115-${{ runner.os }}-
+            ccache-new-6.1.115-
             ccache-new-
       
       - name: 初始化并配置ccache
@@ -154,9 +154,9 @@ jobs:
           mkdir kernel_workspace
           cd kernel_workspace
           echo "正在克隆源码仓库..."
-          aria2c -s16 -x16 -k1M https://github.com/cctv18/android_kernel_common_oneplus_sm8650/archive/refs/heads/oneplus/sm8650_u_14.0.0_oneplus12.zip -o common.zip
+          aria2c -s16 -x16 -k1M https://github.com/cctv18/android_kernel_oneplus_mt6989/archive/refs/heads/oneplus/mt6989_v_15.0.2_ace5_race.zip -o common.zip
           unzip -q common.zip
-          mv "android_kernel_common_oneplus_sm8650-oneplus-sm8650_u_14.0.0_oneplus12" common
+          mv "android_kernel_oneplus_mt6989-oneplus-mt6989_v_15.0.2_ace5_race" common
           rm -rf common.zip
           echo "正在克隆llvm-Clang20工具链..."
           rm -rf clang20
@@ -535,9 +535,9 @@ jobs:
             wget https://raw.githubusercontent.com/cctv18/oppo_oplus_realme_sm8650/refs/heads/main/zram.zip
           fi
           if [[ -n "${{ github.event.inputs.kernel_suffix }}" ]]; then
-            zip -r ../AnyKernel3_${{ env.KSU_TYPENAME }}_${{ env.KSUVER }}_${{ env.KERNEL_VERSION }}_A14_${{ github.event.inputs.kernel_suffix }}.zip ./*
+            zip -r ../AnyKernel3_${{ env.KSU_TYPENAME }}_${{ env.KSUVER }}_${{ env.KERNEL_VERSION }}_A15_${{ github.event.inputs.kernel_suffix }}.zip ./*
           else
-            zip -r ../AnyKernel3_${{ env.KSU_TYPENAME }}_${{ env.KSUVER }}_${{ env.KERNEL_VERSION }}_A14_${{ env.KERNEL_NAME }}.zip ./*
+            zip -r ../AnyKernel3_${{ env.KSU_TYPENAME }}_${{ env.KSUVER }}_${{ env.KERNEL_VERSION }}_A15_${{ env.KERNEL_NAME }}.zip ./*
           fi
 
       - name: 上传 ZIP 工件
@@ -564,11 +564,11 @@ jobs:
       - name: 设置环境变量
         run: |
           if [[ -n "${{ github.event.inputs.kernel_suffix }}" ]]; then
-            FULL_VERSION=${{ format('{0}.57-{1}', env.KERNEL_VERSION, github.event.inputs.kernel_suffix) }}
+            FULL_VERSION=${{ format('{0}.115-{1}', env.KERNEL_VERSION, github.event.inputs.kernel_suffix) }}
             echo "FULL_VERSION=$FULL_VERSION" >> $GITHUB_ENV
             export FULL_VERSION=$FULL_VERSION
           else
-            FULL_VERSION=${{ format('{0}.57-{1}', env.KERNEL_VERSION, env.KERNEL_NAME) }}
+            FULL_VERSION=${{ format('{0}.115-{1}', env.KERNEL_VERSION, env.KERNEL_NAME) }}
             echo "FULL_VERSION=$FULL_VERSION" >> $GITHUB_ENV
             export FULL_VERSION=$FULL_VERSION
           fi
@@ -576,7 +576,7 @@ jobs:
           TIME_FORM="$(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M:%S')"
           echo "TIME=$TIME" >> $GITHUB_ENV
           echo "TIME_FORM=$TIME_FORM" >> $GITHUB_ENV
-          TAG_HEAD="OPPO+OPlus+Realme-A14-build"
+          TAG_HEAD="OPPO+OPlus+Realme-A15-build"
           echo "TAG_HEAD=$TAG_HEAD" >> $GITHUB_ENV
           if [[ ${{ github.event.inputs.ksu_type }} == "sukisu" ]]; then
             KSU_BRANCH="SukiSU Ultra"
@@ -616,10 +616,10 @@ jobs:
           tag_name: "${{ env.TAG_HEAD }}-${{ env.TIME }}"
           name: "${{ env.TAG_HEAD }}-${{ env.FULL_VERSION }}"
           body: |
-            ### 📱 欧加真 Android 14 ${{ env.KSU_BRANCH }} SM8650 通用内核 | 构建信息
+            ### 📱 欧加真 Android 15 ${{ env.KSU_BRANCH }} MT6989 通用内核 | 构建信息
             - 内核版本号: ${{ env.FULL_VERSION }}
             - 编译时间: ${{ env.TIME_FORM }}
-            - 机型：欧加真骁龙8Gen3 6.1.57 Android 14内核通用（基于一加12 6.1.57 Android 14 版官方OKI源码）
+            - 机型：欧加真天玑9400e 6.1.115 Android 15内核通用（基于一加Ace5竞速版 6.1.115 Android 15 版官方OKI源码）
             - 特性：${{ env.KSU_BRANCH }} + SUSFS + VFS + KPM
             - hook模式：${{ github.event.inputs.hook_method }}
             - KPM支持 (仅对sukisu生效)：${{ github.event.inputs.kpm_enable }}
@@ -629,7 +629,7 @@ jobs:
             - BBR/Brutal 等拥塞控制算法支持：${{ github.event.inputs.bbr_enable }}
             - 三星SSG IO调度器支持：${{ env.ssg_enable }}
             - Re-Kernel支持：${{ env.rekernel_enable }}
-            - 推荐系统：ColorOS 14 / RealmeUI 5.0
+            - 推荐系统：ColorOS 15 / RealmeUI 6.0
             - SukiSU Ultra管理器下载：[SukiSU-Ultra](https://github.com/SukiSU-Ultra/SukiSU-Ultra/releases)
             - KernelSU Next管理器下载：[KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next/releases)
             ### ⏫️ 更新内容：

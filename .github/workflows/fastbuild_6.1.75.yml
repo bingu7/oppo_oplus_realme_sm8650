@@ -525,13 +525,19 @@ jobs:
             echo "未找到内核镜像文件，构建可能出错"
             exit 1
           fi
+          if [[ ${{ github.event.inputs.ksu_type }} == "sukisu" ]]; then
+            KSU_TYPENAME="SukiSU"
+          else
+            KSU_TYPENAME="KSUNext"
+          fi
+          echo "KSU_TYPENAME=$KSU_TYPENAME" >> $GITHUB_ENV
           if [[ "${{ github.event.inputs.lz4_enable }}" == "2" || "${{ github.event.inputs.lz4_enable }}" == "3" ]]; then
             wget https://raw.githubusercontent.com/cctv18/oppo_oplus_realme_sm8650/refs/heads/main/zram.zip
           fi
           if [[ -n "${{ github.event.inputs.kernel_suffix }}" ]]; then
-            zip -r ../AnyKernel3_SukiSU_${{ env.KSUVER }}_${{ env.KERNEL_VERSION }}_A15_${{ github.event.inputs.kernel_suffix }}.zip ./*
+            zip -r ../AnyKernel3_${{ env.KSU_TYPENAME }}_${{ env.KSUVER }}_${{ env.KERNEL_VERSION }}_A15_${{ github.event.inputs.kernel_suffix }}.zip ./*
           else
-            zip -r ../AnyKernel3_SukiSU_${{ env.KSUVER }}_${{ env.KERNEL_VERSION }}_A15_${{ env.KERNEL_NAME }}.zip ./*
+            zip -r ../AnyKernel3_${{ env.KSU_TYPENAME }}_${{ env.KSUVER }}_${{ env.KERNEL_VERSION }}_A15_${{ env.KERNEL_NAME }}.zip ./*
           fi
 
       - name: 上传 ZIP 工件
@@ -613,7 +619,7 @@ jobs:
             ### 📱 欧加真 Android 15 ${{ env.KSU_BRANCH }} SM8650 通用内核 | 构建信息
             - 内核版本号: ${{ env.FULL_VERSION }}
             - 编译时间: ${{ env.TIME_FORM }}
-            - 机型：欧加真骁龙8Gen3 6.1 Android 14内核通用（基于一加12 Android 14 版官方OKI源码）
+            - 机型：欧加真骁龙8Gen3 6.1.75 Android 15内核通用（基于一加12 6.1.75 Android 15 版官方OKI源码）
             - 特性：${{ env.KSU_BRANCH }} + SUSFS + VFS + KPM
             - hook模式：${{ github.event.inputs.hook_method }}
             - KPM支持 (仅对sukisu生效)：${{ github.event.inputs.kpm_enable }}
