@@ -13,24 +13,69 @@ env:
 on:
   workflow_dispatch:
     inputs:
-      lz4k_enable:
-        description: '是否安装 LZ4K 补丁'
+      ksu_type:
+        description: 'KernelSU分支(SukiSU Ultra/KernelSU Next,默认SukiSU Ultra)'
+        required: true
+        type: choice
+        default: 'sukisu'
+        options:
+          - 'sukisu'
+          - 'ksunext'
+      hook_method:
+        description: hook模式(大部分情况manual即可，少数需切换sus su模式的场景才需要kprobes钩子)
+        required: true
+        type: choice
+        default: 'manual'
+        options:
+          - 'manual'
+          - 'kprobes'
+      kpm_enable:
+        description: '是否开启kpm(仅对sukisu生效;可能轻微增加耗电，不需要可关闭)'
         required: true
         type: choice
         default: 'true'
         options:
           - 'true'
           - 'false'
-      scx_enable:
-        description: '是否安装风驰内核驱动'
+      lz4_enable:
+        description: '是否安装 lz4 1.10.0+zstd 1.5.7 补丁及 LZ4KD 补丁(0=均不安装,1=安装lz4&zstd补丁,2=安装lz4kd补丁,3=均安装,默认1)'
+        required: true
+        type: choice
+        default: '1'
+        options:
+          - '0'
+          - '1'
+          - '2'
+          - '3'
+      bbr_enable:
+        description: "是否启用bbr算法(优化上行数据,对手机日用无太大意义甚至可能负优化;false关闭,true仅加入算法,default设为默认)"
+        required: true
+        type: choice
+        default: 'false'
+        options:
+          - 'false'
+          - 'true'
+          - 'default'
+      better_net:
+        description: '是否开启网络功能增强优化配置(优化代理连接,IPV6等功能)'
         required: true
         type: choice
         default: 'true'
         options:
           - 'true'
           - 'false'
+      ssg_rekernel_enable:
+        description: '是否启用三星SSG IO调度器及Re-Kernel支持(0=均不安装,1=安装SSG IO调度器,2=安装Re-Kernel,3=均安装,默认1)'
+        required: true
+        type: choice
+        default: '1'
+        options:
+          - '0'
+          - '1'
+          - '2'
+          - '3'
       kernel_suffix:
-        description: '自定义内核版本后缀'
+        description: '内核后缀(留空默认,开头别加连字符,勿加空格等影响指令运行的保留字符)'
         required: false
         type: string
         default: ''
@@ -46,8 +91,23 @@ jobs:
         run: |
           KSU_VERSION="114514"
           echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
-          echo "KSUVER=$KSU_VERSION" >> $GITHUB_OUTPUT
-          export KSUVER=$KSU_VERSION
+          echo "ksuver=$KSU_VERSION" >> $GITHUB_OUTPUT
+          #export KSUVER=$KSU_VERSION
+          
+      - name: 克隆 AnyKernel3 并打包
+        run: |
+          if [[ ${{ github.event.inputs.ksu_type }} == "sukisu" ]]; then
+            KSU_TYPENAME="SukiSU"
+          else
+            KSU_TYPENAME="KSUNext"
+          fi
+          #echo "KSU_TYPENAME=$KSU_TYPENAME" >> $GITHUB_ENV
+          if [[ -n "${{ github.event.inputs.kernel_suffix }}" ]]; then
+            echo "已创建 AnyKernel3_${KSU_TYPENAME}_${{ env.KSUVER }}_${{ env.KERNEL_VERSION }}_A14_${{ github.event.inputs.kernel_suffix }}.zip !"
+          else
+            echo "已创建 AnyKernel3_${KSU_TYPENAME}_${{ env.KSUVER }}_${{ env.KERNEL_VERSION }}_A14_${{ env.KERNEL_NAME }}.zip !"
+          fi
+
   release:
     needs: build
     runs-on: ubuntu-latest
@@ -57,7 +117,7 @@ jobs:
       actions: read
       
     steps:
-      - name: 设置变量
+      - name: 设置环境变量
         run: |
           if [[ -n "${{ github.event.inputs.kernel_suffix }}" ]]; then
             FULL_VERSION=${{ format('{0}.57-{1}', env.KERNEL_VERSION, github.event.inputs.kernel_suffix) }}
@@ -74,7 +134,37 @@ jobs:
           echo "TIME_FORM=$TIME_FORM" >> $GITHUB_ENV
           TAG_HEAD="OPPO+OPlus+Realme-A14-build"
           echo "TAG_HEAD=$TAG_HEAD" >> $GITHUB_ENV
-          
+          if [[ ${{ github.event.inputs.ksu_type }} == "sukisu" ]]; then
+            KSU_BRANCH="SukiSU Ultra"
+          else
+            KSU_BRANCH="KernelSU Next"
+          fi
+          echo "KSU_BRANCH=$KSU_BRANCH" >> $GITHUB_ENV
+          if [[ "${{ github.event.inputs.lz4_enable }}" == "2" || "${{ github.event.inputs.lz4_enable }}" == "3" ]]; then
+            lz4kd_enable="true"
+          else
+            lz4kd_enable="false"
+          fi
+          if [[ "${{ github.event.inputs.lz4_enable }}" == "1" || "${{ github.event.inputs.lz4_enable }}" == "3" ]]; then
+            lz4_zstd_enable="true"
+          else
+            lz4_zstd_enable="false"
+          fi
+          if [[ "${{ github.event.inputs.ssg_rekernel_enable }}" == "1" || "${{ github.event.inputs.ssg_rekernel_enable }}" == "3" ]]; then
+            ssg_enable="true"
+          else
+            ssg_enable="false"
+          fi
+          if [[ "${{ github.event.inputs.ssg_rekernel_enable }}" == "2" || "${{ github.event.inputs.ssg_rekernel_enable }}" == "3" ]]; then
+            rekernel_enable="true"
+          else
+            rekernel_enable="false"
+          fi
+          echo "lz4kd_enable=$lz4kd_enable" >> $GITHUB_ENV
+          echo "lz4_zstd_enable=$lz4_zstd_enable" >> $GITHUB_ENV
+          echo "ssg_enable=$ssg_enable" >> $GITHUB_ENV
+          echo "rekernel_enable=$rekernel_enable" >> $GITHUB_ENV
+         
       - name: 创建发布
         id: create_release
         uses: softprops/action-gh-release@v1
@@ -82,21 +172,30 @@ jobs:
           tag_name: "${{ env.TAG_HEAD }}-${{ env.TIME }}"
           name: "${{ env.TAG_HEAD }}-${{ env.FULL_VERSION }}"
           body: |
-            ### 📱 欧加真 Android 14 SukiSU-Ultra SM8650 通用内核 | 构建信息
+            ### 📱 欧加真 Android 14 ${{ env.KSU_BRANCH }} SM8650 通用内核 | 构建信息
             - 内核版本号: ${{ env.FULL_VERSION }}
             - 编译时间: ${{ env.TIME_FORM }}
-            - 机型：欧加真骁龙8Gen3 6.1 Android 14内核通用（基于一加12 Android 14 版官方OKI源码）
-            - 特性：SukiSU Ultra + SUSFS + VFS + KPM
-            - LZ4K支持：${{ github.event.inputs.lz4k_enable }}
-            - 风驰内核支持：${{ github.event.inputs.scx_enable }}
-            - 推荐系统：ColorOS 14 / RealmeUI 5.0 (安卓15理论通用，未测试)
-            - SukiSU管理器下载：[SukiSU-Ultra](https://github.com/ShirkNeko/SukiSU-Ultra/releases)
+            - 机型：欧加真骁龙8Gen3 6.1.57 Android 14内核通用（基于一加12 6.1.57 Android 14 版官方OKI源码）
+            - 特性：${{ env.KSU_BRANCH }} + SUSFS + VFS + KPM
+            - hook模式：${{ github.event.inputs.hook_method }}
+            - KPM支持 (仅对sukisu生效)：${{ github.event.inputs.kpm_enable }}
+            - LZ4KD支持：${{ env.lz4kd_enable }}
+            - LZ4支持：${{ env.lz4_zstd_enable }}
+            - 网络功能增强：${{ github.event.inputs.better_net }}
+            - BBR/Brutal 等拥塞控制算法支持：${{ github.event.inputs.bbr_enable }}
+            - 三星SSG IO调度器支持：${{ env.ssg_enable }}
+            - Re-Kernel支持：${{ env.rekernel_enable }}
+            - 推荐系统：ColorOS 14 / RealmeUI 5.0
+            - SukiSU Ultra管理器下载：[SukiSU-Ultra](https://github.com/SukiSU-Ultra/SukiSU-Ultra/releases)
+            - KernelSU Next管理器下载：[KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next/releases)
             ### ⏫️ 更新内容：
-            - 更新SukiSU Ultra至最新版本（${{ needs.build.outputs.KSUVER }}）
+            - 更新${{ env.KSU_BRANCH }}至最新版本（${{ needs.build.outputs.ksuver }}）
             - (预留)
             ### 📋 安装方法 | Installation Guide
             1. 若你的手机已经安装了第三方Recovery（如TWRP)，可下载对应机型的AnyKernel刷机包后进入Recovery模式，通过Recovery刷入刷机包后重启设备
-            2. 若你的手机之前已有 root 权限，可在手机上安装KernelFlasher，在KernelFlasher中刷入AnyKernel刷机包并重启
+            2. 若你的手机之前已有 root 权限，可在手机上安装[HorizonKernelFlasher](https://github.com/libxzr/HorizonKernelFlasher/releases)，在HorizonKernelFlasher中刷入AnyKernel刷机包并重启
             3. 若你之前已刷入SukiSU Ultra内核，且SukiSU Ultra管理器已更新至最新版本，可在SukiSU Ultra管理器中直接刷入AnyKernel刷机包并重启
+            4. 刷入无lz4kd补丁版的内核前若刷入过lz4kd补丁版的内核，为避免出错，请先关闭zram模块
+            #### ※※※刷写内核有风险，为防止出现意外导致手机变砖，在刷入内核前请务必用[KernelFlasher](https://github.com/capntrips/KernelFlasher)等软件备份boot等关键启动分区!※※※
           draft: false
-          prerelease: true
+          prerelease: false
