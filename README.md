@@ -1,10 +1,10 @@
-# 欧加真 SM8650/MT6989 系列通用6.1内核自动化编译脚本
+# 欧加真 SM8650/MT6989/MT6897 系列通用6.1内核自动化编译脚本
 [![STAR](https://img.shields.io/github/stars/cctv18/oppo_oplus_realme_sm8650?style=flat&logo=github)](https://github.com/cctv18/oppo_oplus_realme_sm8650/stargazers)
 [![FORK](https://img.shields.io/github/forks/cctv18/oppo_oplus_realme_sm8650?style=flat&logo=greasyfork&color=%2394E61A)](https://github.com/cctv18/oppo_oplus_realme_sm8650/forks)
 [![COOLAPK](https://img.shields.io/badge/cctv18_2-cctv18_2?style=flat&logo=android&logoColor=FF4500&label=%E9%85%B7%E5%AE%89&color=FF4500)](http://www.coolapk.com/u/22650293)
 [![DISCUSSION](https://img.shields.io/badge/%E8%AE%A8%E8%AE%BA%E5%8C%BA-discussions?logo=livechat&logoColor=FFBBFF&color=3399ff)](https://github.com/cctv18/oppo_oplus_realme_sm8650/discussions)
 ##### 
-一个更方便、快捷的自动化OPPO/一加/真我系列骁龙8Gen3(SM8650)/天玑9400e(MT6989)机型的通用内核编译脚本。
+一个更方便、快捷的自动化OPPO/一加/真我系列骁龙8Gen3(SM8650)/天玑9400e(MT6989)/天玑8350(MT6897)机型的通用内核编译脚本。
 ##### 
 这个项目的初衷是解决以下问题：
 - 绿厂官方摆烂，代码开源开一半，导致部分内核代码无法通过已有的配置xml正常编译，甚至没有编译配置xml；
@@ -17,8 +17,9 @@
 - 修复官方代码部分bug/未及时更新的补丁，并引入风驰内核驱动支持 ~~（尚无法正常起效，代码正在补全中）~~；
 - 提供 Github Action 在线编译/shell本地编译双版本脚本。
 ## 已实现：
-- [x] 欧加真 SM8650 通用OKI内核（基于一加12 6.1.57/6.1.75/6.1.118 A15官方内核源码，其他同内核版本非SM8650机型可自行测试，部分机型可完全兼容）
-- [x] 欧加真 MT6989 通用OKI内核（基于一加Ace5竞速版 6.1.115 A15官方内核源码，其他同内核版本非MT6989机型可自行测试，部分机型可完全兼容）
+- [x] 欧加真 SM8650 通用OKI内核（基于一加12 6.1.57/6.1.75/6.1.118 官方内核源码，其他同内核版本非SM8650机型可自行测试，部分机型可完全兼容）
+- [x] 欧加真 MT6989 通用OKI内核（基于一加Ace5竞速版 6.1.115 官方内核源码，其他同内核版本非MT6989机型可自行测试，部分机型可完全兼容）
+- [x] 欧加真 MT6897 通用OKI内核（基于一加平板 6.1.128 官方内核源码，其他同内核版本非MT6897机型可自行测试，部分机型可完全兼容）
 - [x] SukiSU Ultra/KernelSU Next双版本KSU可选
 - [x] 引入ccache缓存，优化工具链及编译流程，二次编译时间可缩短至约6min (注：首次使用ccache由于需要创建缓存速度会比较慢(约20-24min)，从第二次开始ccache才会生效加速编译，加速后单次编译时间约6~11min，具体时间随服务器负载情况而浮动；之后除非缓存出现问题，如无法加速等，可无需再清理ccache缓存)
 - [x] 引入O2编译优化，改善内核运行性能
@@ -34,7 +35,7 @@
 - [ ] LXC/Docker 功能支持
 - [ ] Nethunter 驱动移植
 - [ ] 一加系列新版调度器移植（schedhorizon等）
-- [ ] 欧加真 SM8650 通用A14/15 GKI内核（移植一加f2fs源码，实现免清data刷入）
+- [ ] 欧加真 6.1 通用 GKI内核（移植一加f2fs源码，实现免清data刷入）
 - ~~整合多版本内核编译脚本（出于操作便捷性及GitHub Action的选项数量限制，暂不进行多脚本整合）~~
 - 更多优化与特性移植……
 ##### 

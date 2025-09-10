@@ -1,8 +1,8 @@
-name: 加速版构建 6.1.118 欧加真OKI内核
+name: 加速版构建 6.1.128 (天玑特供)欧加真OKI内核
 
 env:
   TZ: Asia/Shanghai
-  CPU: 'sm8650'
+  CPU: 'mt6989'
   FEIL: 'oppo+oplus+realme'
   ANDROID_VERSION: 'android14'
   KERNEL_VERSION: '6.1'
@@ -60,10 +60,10 @@ on:
           - 'true'
           - 'default'
       better_net:
-        description: '是否开启网络功能增强优化配置(优化代理连接,IPV6等功能)'
+        description: '是否开启网络功能增强优化配置(优化代理连接,IPV6等功能;在部分天玑机型上可能导致bug,建议关闭)'
         required: true
         type: choice
-        default: 'true'
+        default: 'false'
         options:
           - 'true'
           - 'false'
@@ -103,11 +103,11 @@ jobs:
 
       - name: 配置ccache目录
         run: |
-          echo "CCACHE_DIR=$HOME/.ccache_6.1.118" >> $GITHUB_ENV
+          echo "CCACHE_DIR=$HOME/.ccache_6.1.128" >> $GITHUB_ENV
           echo "CCACHE_MAXSIZE=3G" >> $GITHUB_ENV
           echo "当前磁盘空间："
           df -h
-          echo "当前构建内核版本：6.1.118"
+          echo "当前构建内核版本：6.1.128"
           rm -rf kernel_workspace
           mkdir kernel_workspace
 
@@ -116,10 +116,10 @@ jobs:
         id: ccache-restore
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ccache-new-6.1.118-${{ runner.os }}-main
+          key: ccache-new-6.1.128-${{ runner.os }}-main
           restore-keys: |
-            ccache-new-6.1.118-${{ runner.os }}-
-            ccache-new-6.1.118-
+            ccache-new-6.1.128-${{ runner.os }}-
+            ccache-new-6.1.128-
       
       - name: 初始化并配置ccache
         run: |
@@ -152,9 +152,9 @@ jobs:
         run: |
           cd kernel_workspace
           echo "正在克隆源码仓库..."
-          aria2c -s16 -x16 -k1M https://github.com/cctv18/android_kernel_common_oneplus_sm8650/archive/refs/heads/oneplus/sm8650_v_15.0.0_oneplus12_6.1.118.zip -o common.zip && 
+          aria2c -s16 -x16 -k1M https://github.com/cctv18/android_kernel_oneplus_mt6897/archive/refs/heads/oneplus/mt6897_v_15.0.0_oneplus_pad.zip -o common.zip && 
           unzip -q common.zip && 
-          mv "android_kernel_common_oneplus_sm8650-oneplus-sm8650_v_15.0.0_oneplus12_6.1.118" common &&
+          mv "android_kernel_oneplus_mt6897-oneplus-mt6897_v_15.0.0_oneplus_pad" common &&
           rm -rf common.zip &
           
           echo "正在克隆llvm-Clang20工具链..." &&
@@ -567,11 +567,11 @@ jobs:
       - name: 设置环境变量
         run: |
           if [[ -n "${{ github.event.inputs.kernel_suffix }}" ]]; then
-            FULL_VERSION=${{ format('{0}.118-{1}', env.KERNEL_VERSION, github.event.inputs.kernel_suffix) }}
+            FULL_VERSION=${{ format('{0}.128-{1}', env.KERNEL_VERSION, github.event.inputs.kernel_suffix) }}
             echo "FULL_VERSION=$FULL_VERSION" >> $GITHUB_ENV
             export FULL_VERSION=$FULL_VERSION
           else
-            FULL_VERSION=${{ format('{0}.118-{1}', env.KERNEL_VERSION, env.KERNEL_NAME) }}
+            FULL_VERSION=${{ format('{0}.128-{1}', env.KERNEL_VERSION, env.KERNEL_NAME) }}
             echo "FULL_VERSION=$FULL_VERSION" >> $GITHUB_ENV
             export FULL_VERSION=$FULL_VERSION
           fi
@@ -619,10 +619,10 @@ jobs:
           tag_name: "${{ env.TAG_HEAD }}-${{ env.TIME }}"
           name: "${{ env.TAG_HEAD }}-${{ env.FULL_VERSION }}"
           body: |
-            ### 📱 欧加真 Android 15 ${{ env.KSU_BRANCH }} SM8650 通用内核 | 构建信息
+            ### 📱 欧加真 Android 15 ${{ env.KSU_BRANCH }} MT6897 通用内核 | 构建信息
             - 内核版本号: ${{ env.FULL_VERSION }}
             - 编译时间: ${{ env.TIME_FORM }}
-            - 机型：欧加真骁龙8Gen3 6.1.118 Android 14内核通用（基于一加12 6.1.118 Android 15 版官方OKI源码）
+            - 机型：欧加真天玑8350 6.1.128 Android 15内核通用（基于一加平板 6.1.128 Android 15 版官方OKI源码）
             - 特性：${{ env.KSU_BRANCH }} + SUSFS + VFS + KPM
             - hook模式：${{ github.event.inputs.hook_method }}
             - KPM支持 (仅对sukisu生效)：${{ github.event.inputs.kpm_enable }}

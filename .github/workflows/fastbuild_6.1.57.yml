@@ -120,7 +120,6 @@ jobs:
           restore-keys: |
             ccache-new-6.1.57-${{ runner.os }}-
             ccache-new-6.1.57-
-            ccache-new-
       
       - name: 初始化并配置ccache
         run: |
