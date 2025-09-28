@@ -120,13 +120,13 @@ if [[ "$KSU_BRANCH" == "y" ]]; then
   git clone https://github.com/shirkneko/susfs4ksu.git -b gki-android14-6.1
   git clone https://github.com/ShirkNeko/SukiSU_patch.git
   cp ./susfs4ksu/kernel_patches/50_add_susfs_in_gki-android14-6.1.patch ./common/
-  cp ./SukiSU_patch/hooks/syscall_hooks.patch ./common/
+  cp ./SukiSU_patch/hooks/scope_min_manual_hooks_v1.5.patch ./common/
   cp ./SukiSU_patch/69_hide_stuff.patch ./common/
   cp ./susfs4ksu/kernel_patches/fs/* ./common/fs/
   cp ./susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
   cd ./common
   patch -p1 < 50_add_susfs_in_gki-android14-6.1.patch || true
-  patch -p1 < syscall_hooks.patch || true
+  patch -p1 < scope_min_manual_hooks_v1.5.patch || true
   patch -p1 -F 3 < 69_hide_stuff.patch || true
 else
   git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android14-6.1
@@ -134,11 +134,11 @@ else
   cp ./susfs4ksu/kernel_patches/50_add_susfs_in_gki-android14-6.1.patch ./common/
   cp ./susfs4ksu/kernel_patches/fs/* ./common/fs/
   cp ./susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
-  cp ./kernel_patches/next/scope_min_manual_hooks_v1.4.patch ./common/
+  cp ./kernel_patches/next/scope_min_manual_hooks_v1.5.patch ./common/
   cp ./kernel_patches/69_hide_stuff.patch ./common/
   cd ./common
   patch -p1 < 50_add_susfs_in_gki-android14-6.1.patch || true
-  patch -p1 -N -F 3 < scope_min_manual_hooks_v1.4.patch || true
+  patch -p1 -N -F 3 < scope_min_manual_hooks_v1.5.patch || true
   patch -p1 -N -F 3 < 69_hide_stuff.patch || true
 fi
 cd ../
