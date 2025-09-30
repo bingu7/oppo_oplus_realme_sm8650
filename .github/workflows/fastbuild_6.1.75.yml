@@ -25,12 +25,13 @@ on:
           - 'sukisu'
           - 'ksunext'
       hook_method:
-        description: hook模式(大部分情况manual即可，少数需切换sus su模式的场景才需要kprobes钩子)
+        description: hook模式(大部分情况manual即可，若新版manual钩子出现问题可尝试syscall, 少数需切换sus su模式的场景才需要kprobes钩子)
         required: true
         type: choice
         default: 'manual'
         options:
           - 'manual'
+          - 'syscall'
           - 'kprobes'
       kpm_enable:
         description: '是否开启kpm(仅对sukisu生效;可能轻微增加耗电，不需要可关闭)'
@@ -263,11 +264,21 @@ jobs:
             cp ./susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ env.ANDROID_VERSION }}-${{ env.KERNEL_VERSION }}.patch ./common/
             cp ./susfs4ksu/kernel_patches/fs/* ./common/fs/
             cp ./susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
-            cp ./SukiSU_patch/hooks/scope_min_manual_hooks_v1.5.patch ./common/
+            if [[ ${{ github.event.inputs.hook_method }} == "manual" ]]; then
+              cp ./SukiSU_patch/hooks/scope_min_manual_hooks_v1.5.patch ./common/
+            fi
+            if [[ ${{ github.event.inputs.hook_method }} == "syscall" ]]; then
+              cp ./SukiSU_patch/hooks/syscall_hooks.patch ./common/
+            fi
             cp ./SukiSU_patch/69_hide_stuff.patch ./common/
             cd ./common
             patch -p1 < 50_add_susfs_in_gki-${{ env.ANDROID_VERSION }}-${{ env.KERNEL_VERSION }}.patch || true
-            patch -p1 < scope_min_manual_hooks_v1.5.patch || true
+            if [[ ${{ github.event.inputs.hook_method }} == "manual" ]]; then
+              patch -p1 < scope_min_manual_hooks_v1.5.patch || true
+            fi
+            if [[ ${{ github.event.inputs.hook_method }} == "syscall" ]]; then
+              patch -p1 < syscall_hooks.patch || true
+            fi
             patch -p1 < 69_hide_stuff.patch || true
           else
             echo "正在添加KernelSU Next补丁..."
@@ -276,11 +287,21 @@ jobs:
             cp ./susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ env.ANDROID_VERSION }}-${{ env.KERNEL_VERSION }}.patch ./common/
             cp ./susfs4ksu/kernel_patches/fs/* ./common/fs/
             cp ./susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
-            cp ./kernel_patches/next/scope_min_manual_hooks_v1.5.patch ./common/
+            if [[ ${{ github.event.inputs.hook_method }} == "manual" ]]; then
+              cp ./kernel_patches/next/scope_min_manual_hooks_v1.5.patch ./common/
+            fi
+            if [[ ${{ github.event.inputs.hook_method }} == "syscall" ]]; then
+              cp ./kernel_patches/next/syscall_hooks.patch ./common/
+            fi
             cp ./kernel_patches/69_hide_stuff.patch ./common/
             cd ./common
             patch -p1 < 50_add_susfs_in_gki-${{ env.ANDROID_VERSION }}-${{ env.KERNEL_VERSION }}.patch || true
-            patch -p1 -N -F 3 < scope_min_manual_hooks_v1.5.patch || true
+            if [[ ${{ github.event.inputs.hook_method }} == "manual" ]]; then
+              patch -p1 -N -F 3 < scope_min_manual_hooks_v1.5.patch || true
+            fi
+            if [[ ${{ github.event.inputs.hook_method }} == "syscall" ]]; then
+              patch -p1 -N -F 3 < syscall_hooks.patch || true
+            fi
             patch -p1 -N -F 3 < 69_hide_stuff.patch || true
           fi
           
@@ -327,7 +348,7 @@ jobs:
             echo "CONFIG_KSU_MANUAL_HOOK=n" >> ./common/arch/arm64/configs/gki_defconfig
             echo "CONFIG_KSU_KPROBES_HOOK=y" >> ./common/arch/arm64/configs/gki_defconfig
           else
-            echo "正在开启manual钩子..."
+            echo "正在开启manual/syscall钩子..."
             echo "CONFIG_KSU_MANUAL_HOOK=y" >> ./common/arch/arm64/configs/gki_defconfig
             echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./common/arch/arm64/configs/gki_defconfig
           fi
